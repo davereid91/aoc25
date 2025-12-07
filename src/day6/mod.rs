@@ -1,41 +1,45 @@
 pub fn execute_part_1() {
     let content = include_str!("input");
     let lines: Vec<_> = content.lines().collect();
-    let operator_line = lines.last().unwrap();
-    let data_lines = &lines[..lines.len() - 1];
+    let mut reversed = lines.iter().rev();
+    let operator_line = reversed.next().unwrap();
 
-    let mut operands_with_offset = Vec::new();
-    for (i, ch) in operator_line.char_indices() {
+    let mut positions = Vec::new();
+    for (i, ch) in operator_line.chars().enumerate() {
         if !ch.is_whitespace() {
-            operands_with_offset.push((ch, i));
+            positions.push((i, ch));
         }
     }
 
-    let mut result = 0;
+    let mut rows = vec![];
+    for line in lines.iter().take(lines.len() - 1) {
+        let mut row = Vec::new();
 
-    for i in 0..operands_with_offset.len() {
-        let start = operands_with_offset[i].1;
-        let end = if i + 1 < operands_with_offset.len() {
-            operands_with_offset[i + 1].1
-        } else {
-            operator_line.len()
-        };
+        for i in 0..positions.len() {
+            let start = positions[i].0;
+            let end = if i + 1 < positions.len() {
+                positions[i + 1].0
+            } else {
+                line.len()
+            };
 
-        let operator = operands_with_offset[i].0;
-        let mut column_sum = 0;
-        let mut column_product = 1;
-
-        for line in data_lines {
-            let value = line[start..end].trim().parse::<usize>().unwrap_or(0);
-            column_sum += value;
-            column_product *= value;
+            let value = line[start..end].trim().parse().unwrap_or(0);
+            row.push(value);
         }
 
-        result += match operator {
-            '+' => column_sum,
-            '*' => column_product,
-            _ => 0,
-        };
+        rows.push(row);
+    }
+
+    let mut result: usize = 0;
+
+    for (i, (_, operator)) in positions.iter().enumerate() {
+        let columns: Vec<usize> = rows.iter().map(|row| row[i] as usize).collect();
+
+        match operator {
+            '+' => result += columns.iter().sum::<usize>(),
+            '*' => result += columns.iter().product::<usize>(),
+            _ => {}
+        }
     }
 
     println!("{result}");
